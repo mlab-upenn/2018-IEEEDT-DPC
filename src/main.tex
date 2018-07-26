@@ -1,4 +1,7 @@
-\documentclass[peerreviewca,draftcls,onecolumn]{IEEEtran}
+\documentclass[twocolumn]{IEEEtran}  % peerreviewca,draftcls
+
+\usepackage{xcolor}
+\newcommand{\note}[1]{\textcolor{red}{\textbf{#1}}}
 
 % Some very useful LaTeX packages include:
 % (uncomment the ones you want to load)
@@ -53,22 +56,22 @@
 % *** GRAPHICS RELATED PACKAGES ***
 %
 \ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
+  \usepackage[pdftex]{graphicx}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
+  \graphicspath{{figures/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+  \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
 \else
   % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
   % will default to the driver specified in the system graphics.cfg if no
   % driver is specified.
-  % \usepackage[dvips]{graphicx}
+  \usepackage[dvips]{graphicx}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../eps/}}
+  \graphicspath{{figures/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.eps}
+  \DeclareGraphicsExtensions{.eps}
 \fi
 % graphicx was written by David Carlisle and Sebastian Rahtz. It is
 % required if you want graphics, photos, etc. graphicx.sty is already
@@ -90,13 +93,19 @@
 % You can find documentation about the pdfTeX application at:
 % http://www.tug.org/applications/pdftex
 
-
+\usepackage{tikz}
+\usepackage{pgfplots} 
+\pgfplotsset{compat=newest} 
+\pgfplotsset{plot coordinates/math parser=false}
+\newlength\fwidth
+\newlength\hwidth
 
 
 
 % *** MATH PACKAGES ***
 %
-%\usepackage{amsmath}
+\usepackage{amsmath}
+\usepackage{amsfonts}
 % A popular package from the American Mathematical Society that provides
 % many useful and powerful commands for dealing with mathematics.
 %
@@ -114,7 +123,14 @@
 
 % *** SPECIALIZED LIST PACKAGES ***
 %
-%\usepackage{algorithmic}
+% \usepackage{algorithmic}
+\usepackage{algorithm,algpseudocode}
+
+% make algo small
+\makeatletter
+\renewcommand{\ALG@beginalgorithmic}{\small}
+\makeatother
+
 % algorithmic.sty was written by Peter Williams and Rogerio Brito.
 % This package provides an algorithmic environment fo describing algorithms.
 % You can use the algorithmic environment in-text or within a figure
@@ -128,8 +144,6 @@
 % Also of interest may be the (relatively newer and more customizable)
 % algorithmicx.sty package by Szasz Janos:
 % http://www.ctan.org/pkg/algorithmicx
-
-
 
 
 % *** ALIGNMENT PACKAGES ***
@@ -286,10 +300,53 @@
 % to submit to, of course. )
 
 
+%%%%%%%%%%%%%%%%% Macros used in the paper %%%%%%%%%%%%%%%%%%%%
+
+\usepackage{xspace}
+
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{problem}{Problem}
+\newtheorem{remark}{Remark}
+
+\newcommand{\GaussianDist}[2]{\ensuremath{\operatorname*{\mathcal{N}}\left(#1, #2\right)}}  % Gaussian distribution given mean and variance
+\newcommand{\GaussianDistSmall}[2]{\ensuremath{\operatorname*{\mathcal{N}}(#1, #2)}}  % Gaussian distribution given mean and variance
+
+\newcommand{\st}{\mbox{\text{subject to}}}
+
+\newcommand{\sigmamax}[1][0]{\ensuremath{\overbar{\sigma}_{#1}}}
+
+\newcommand{\eg}{e.g.,\xspace}
+\newcommand{\ie}{i.e.,\xspace}
+\newcommand{\etc}{etc.\xspace}
+\newcommand{\cf}{cf.~}
+
+% Some commonly used math functions/operators
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\minimize}{minimize}
+\DeclareMathOperator*{\maximize}{maximize}
+\DeclareMathOperator{\sgn}{sgn}  % the signum/sign function
+\DeclareMathOperator*{\cov}{Cov} % covariance
+\DeclareMathOperator*{\var}{Var} % variance
+\DeclareMathOperator*{\diag}{diag} % diagonal
+
+\newcommand{\RR}{\mathbb{R}\xspace}  % Real set
+\newcommand{\NN}{\mathbb{N}\xspace}  % Natural number set
+\newcommand{\QQ}{\mathbb{Q}\xspace}  % Rational number set
+\newcommand{\CC}{\mathbb{C}\xspace}  % Complex number set
+\newcommand{\ZZ}{\mathbb{Z}\xspace}  % Integer number set
+\newcommand{\EE}{\mathbb{E}\xspace}  % Expectation
+\newcommand{\PP}{\mathbb{P}\xspace}  % Probability
+\newcommand{\BB}{\mathbb{B}\xspace}  % Logic set {true, false}
+\newcommand{\D}{\mathcal{D}\xspace}
+\newcommand{\C}{\mathcal{C}\xspace}
+
+
 % correct bad hyphenation here
 %\hyphenation{op-tical net-works semi-conduc-tor}
 
-\def\papertitle{Pending Title}
+\def\papertitle{[Temporary] Learning to Control Smart (Building) Energy Systems (with Gaussian Processes)}
 
 \begin{document}
 %
@@ -339,7 +396,7 @@
 
 
 % The paper headers
-\markboth{Journal of \LaTeX\ Class Files,~Vol.~14, No.~8, August~2015}%
+\markboth{JOURNAL OF IEEE DESIGN \& TEST , VOL. XX, NO. X, XX-XX-XXXX}%
 {Nghiem \MakeLowercase{\textit{et al.}}: \papertitle}
 % The only time the second header will appear is for the odd numbered pages
 % after the title page when using the twoside option.
@@ -376,9 +433,9 @@ The abstract goes here.
 \end{abstract}
 
 % Note that keywords are not normally used for peerreview papers.
-\begin{IEEEkeywords}
-IEEE, IEEEtran, journal, \LaTeX, paper, template.
-\end{IEEEkeywords}
+% \begin{IEEEkeywords}
+% IEEE, IEEEtran, journal, \LaTeX, paper, template.
+% \end{IEEEkeywords}
 
 
 
@@ -393,11 +450,10 @@ IEEE, IEEEtran, journal, \LaTeX, paper, template.
 %
 % For peerreview papers, this IEEEtran command inserts a page break and
 % creates the second title. It will be ignored for other modes.
-\IEEEpeerreviewmaketitle
+%\IEEEpeerreviewmaketitle
 
 
-
-\section{Introduction}
+% INSTRUCTIONS:
 % The very first letter is a 2 line initial drop letter followed
 % by the rest of the first word in caps.
 % 
@@ -514,11 +570,33 @@ IEEE, IEEEtran, journal, \LaTeX, paper, template.
 % footnotes above bottom floats. This can be corrected via the
 % \fnbelowfloat command of the stfloats package.
 
+\section{Introduction}
+\label{sec:introduction}
+\input{intro}
 
+\section{Related Work}
+\label{sec:related-work}
+\input{related}
 
+\section{Learning Models of Smart Energy Systems}
+\label{sec:modeling}
+\input{modeling}
+
+\section{Learning-based Control Smart Energy Systems}
+\label{sec:control}
+\input{control}
+
+\section{Learning to Adapt Smart Energy Systems}
+\label{sec:adapt}
+\input{adapt}
+
+\section{Implementation and Case Study}
+\label{sec:case-study}
+\input{casestudy}
 
 \section{Conclusion}
-
+\label{sec:conclusion}
+\input{conclusion}
 
 % if have a single appendix:
 %\appendix[Proof of the Zonklar Equations]
@@ -573,9 +651,9 @@ The authors would like to thank...
 % http://mirror.ctan.org/biblio/bibtex/contrib/doc/
 % The IEEEtran BibTeX style support page is at:
 % http://www.michaelshell.org/tex/ieeetran/bibtex/
-%\bibliographystyle{IEEEtran}
+\bibliographystyle{IEEEtran}
 % argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
+\bibliography{references}
 %
 % <OR> manually copy in the resultant .bbl file
 % set second argument of \begin to the number of references
@@ -594,19 +672,19 @@ The authors would like to thank...
 %\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mshell}}]{Michael Shell}
 % or if you just want to reserve a space for a photo:
 
-\begin{IEEEbiography}{Truong X. Nghiem}
-\end{IEEEbiography}
+% \begin{IEEEbiography}{Truong X. Nghiem}
+% \end{IEEEbiography}
 
 % if you will not have a photo at all:
-\begin{IEEEbiography}{Achin Jain}
-\end{IEEEbiography}
+% \begin{IEEEbiography}{Achin Jain}
+% \end{IEEEbiography}
 
 % insert where needed to balance the two columns on the last page with
 % biographies
 %\newpage
 
-\begin{IEEEbiography}{Rahul Mangharam}
-\end{IEEEbiography}
+% \begin{IEEEbiography}{Rahul Mangharam}
+% \end{IEEEbiography}
 
 % You can push biographies down or up by placing
 % a \vfill before or after them. The appropriate
@@ -626,3 +704,8 @@ The authors would like to thank...
 \end{document}
 
 
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

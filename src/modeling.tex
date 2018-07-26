@@ -1,0 +1,249 @@
+
+\subsection{Brief Introduction to Gaussian Processes}
+\label{sec:modeling:gp}
+
+
+This section, adapted from \note{cite ICCPS}, briefly introduces Gaussian Processes (GP).
+For an in-depth treatment of GP, interested readers are referred to \cite{Rasmussen2006}.
+
+\note{Need to adapt the following text in this subsection.}
+
+Consider noisy observations \(y\) of an underlying function \(f: \RR^n \mapsto \RR\) through a Gaussian noise model: \(y = f(x) + \epsilon\), where \(\epsilon \sim \GaussianDist{0}{\sigma_n^2}\) and  \(x \in \RR^n\).
+A GP of $y$ is essentially a probability distribution on the observations of all possible realizations of $f$.
+By conditioning the GP on a finite set of observation data of $f$, one can derive the posterior distribution, which allows probabilistic inference at a new input.
+% The formal definition of a GP can be found in \cite{Rasmussen2006} and is reproduced below.
+% \begin{definition}
+% A Gaussian Process is a collection of random variables, any finite number of which have a joint Gaussian distribution.
+% \end{definition}
+%
+A GP of \(y\) is fully specified by its mean function \(\mu(x)\) and covariance function \(k(x,x')\),
+\begin{align*}
+\label{E:gp:prior}
+\mu(x; \theta) &= \EE [f(x)] \\
+k(x,x'; \theta) &= \EE [(f(x)\!-\!\mu(x)) (f(x') \!-\! \mu(x'))] + \sigma_n^2 \delta(x,x') \nonumber
+\end{align*}
+where \(\delta(x,x')\) is the Kronecker delta function.
+The mean and covariance functions, hence the GP, are parameterized by the \emph{hyperparameter} vector \(\theta\), denoted by \(y \sim \mathcal{GP}(\mu, k; \theta)\).
+There exists a wide range of covariance functions and combinations to choose from \cite{Rasmussen2006}.
+
+Given the regression vectors \(X = [x_1, \dots, x_N]^T\) and the corresponding observed outputs \(Y = [y_1, \dots, y_N]^T\), we define training data by $\D = (X, Y)$. The distribution of the output \(y_\star\) corresponding to a new input vector \(x_\star\) is a Gaussian distribution \(\GaussianDist{\bar{y}_\star}{\sigma_\star^2}\), with mean and variance given by
+\begin{subequations}
+\label{E:gp-regression}
+\begin{align*}
+\bar{y}_\star &= \mu(x_\star) + K_\star K^{-1} (Y - \mu(X))\\
+\sigma_\star^2 &= K_{\star \star} - K_\star K^{-1} K_\star^T \text,
+\end{align*}
+\end{subequations}
+where \(K_\star = [k(x_\star, x_1), \dots, k(x_\star, x_N)]\), \(K_{\star \star} = k(x_\star, x_\star)\), and $K$ is the covariance matrix with elements \(K_{ij} = k(x_i, x_j)\).
+
+In theory, hyperparameters $\theta$ are random variables, which define the GP distribution on the function and whose posterior distributions are obtained by conditioning them on $\D$ using the Bayes' theorem.
+In practice, $\theta$ are often obtained by maximizing the likelihood: \(\argmax_\theta \Pr(Y \vert X, \theta)\).
+
+The covariance function \(k(x,x')\) indicates how correlated the outputs are at \(x\) and \(x'\), with the intuition that the output at an input is influenced more by the outputs of nearby inputs in the training data $\D$.
+In other words, a GP model specifies the structure of the covariance matrix of, or the relationship between, the input variables rather than a fixed structural input--output relationship.
+It is therefore \emph{highly flexible} and \emph{can capture complex behavior with fewer parameters}.
+A GP also provides an \emph{estimate of uncertainty or confidence} in the predictions through the predictive variance.  While the predictive mean is often used as the best guess of the output, the variance can be used in a meaningful way, as we show in this paper.
+In addition, GP \emph{work well with small data sets}, which is useful for any learning application where data are not easily obtained.
+Finally, GP allow including prior knowledge of the underlying function by defining priors on the hyperparameters or constructing a particular structure of the covariance function.  This feature enables \emph{incorporating domain knowledge} into the GP model to improve its accuracy.
+
+
+\subsection{Data-driven Modeling of Building Energy Systems with Gaussian Processes}
+\label{sec:modeling:building}
+
+\note{Need to adapt the following text in this subsection.}
+
+Consider a nonlinear dynamical system with control input \(u\), exogenous disturbance input \(w\), and output \(y\).
+At a current time step $t$, time-delayed input and output signals are called \emph{autoregressive}, for example: $y_{t-1}, u_{t-1}, w_{t-1}$.
+By feeding autoregressive inputs and outputs to a GP as regressors, we can model the dynamic behavior of the system \cite{Kocijan2016}.
+Specifically, the regressor vector $x_{t}$ at time step $t$ would be
+\begin{equation*}
+x_{t}\!=\![y_{t-l}, \dots, y_{t-1}, u_{t-m}, \dots, u_t, w_{t-p}, \dots, w_{t-1}, w_t] \text.
+\end{equation*}
+where \(l\), \(m\), and \(p\) are respectively the lags for autoregressive outputs, control inputs, and disturbances.
+Note that \(u_t\) and \(w_t\) are the current control and disturbance inputs.
+The dynamical GP
+\begin{math}
+y_{t} = f(x_t)
+\end{math}
+can then be trained from data in the same way as any other GPs.
+
+In a multistep simulation of a dynamical GP, the autoregressive outputs fed to the model beyond the first step are random variables, resulting in more and more complex output distributions as we go further.
+Therefore, it involves uncertainty propagation through the model, which would complicate the computation of the model significantly.
+\cite{nghiemetal16gp} showed that a simple simulation method called \emph{zero-variance method}, which replaces the autoregressive signals with their corresponding expected values, could achieve sufficient prediction accuracy while benefitting from computational simplicity.
+In this paper, the zero-variance method was selected for predicting future outputs in optimization formulations.
+
+We use a U.S. Department of Energy’s Commercial Reference Building (DoE CRB) simulated in EnergyPlus as the virtual test-bed building. It is a large 12-story office building consisting of 19 zones with a total area of 498,588 sq.ft. Under peak load conditions the office can consume up to 1.4 MW of power.
+Our aim is to model the building's power demand and zone temperature behavior from data that can be measured directly from installed sensors such as thermostats, multimeters and weather forecast.
+We learn two GP models: \(\mathcal{M}_1\) for predicting the power demand and \(\mathcal{M}_2\) for predicting the temperature of a particular zone in the building.
+The following feature variables are used for training:
+\begin{itemize}
+\item \textit{Weather variables \(d^w\):} such as outside temperature and humidity, which are derived from historical weather data.
+\item \textit{Proxy variables \(d^p\):} such as time of day and day of week, which indicate occupancy and periodic trends.
+%\textit{Fixed schedules  \(d^s\):} kitchen cooling set point, corridor cooling set point - these set points follow predefined rules. 
+\item \textit{Control variables \(u\):} such as cooling, supply air temperature and chilled water setpoints -- these variables will be optimized in MPC.
+\item \textit{Output variable \(y\):} total power consumption for\(\mathcal{M}_1\) and zone temperature for \(\mathcal{M}_2\) -- this is the output of interest which we will predict using all the above features in the model.
+\end{itemize}
+
+Using these measurement data, we learn autoregressive GP models \(\mathcal{M}_1\) and \(\mathcal{M}_2\), and use the zero-variance method to predict the future output \(y_{t+\tau}\), where $t$ is the current time and \( \tau \ge 0\).
+Specifically,
+\begin{gather}
+\label{eq:dpc:prediction}
+y_{t+\tau} \sim \GaussianDist{\bar{y}_{t+\tau} = g_{\mathrm m}(x_{t+\tau})}{\sigma^2_{y, t+\tau} = g_{\mathrm v}(x_{t+\tau})}, \\
+x_{t + \tau} = [\bar y_{t+ \tau-l}, \dots, \bar y_{t+ \tau-1}, u_{t+ \tau-m}, \dots, u_{t+ \tau}, \nonumber \\
+\qquad\qquad\qquad\qquad  w_{t+ \tau-p}, \dots, w_{t+ \tau-1}, w_{t+ \tau}]\text, \nonumber
+\end{gather}
+in which \(w:=[d^w, d^p]\).
+It is assumed that at time \(t\), \(w_{t+\tau}\) are available \(\forall \tau \) from forecasts or fixed rules as applicable.
+For the GP, we use a constant mean function and the special covariance function proposed in our previous work \cite{nghiemetal16gp} to capture both the temporal pattern of the energy usage and the effect of non-temporal features, such as weather conditions and temperature setpoints, on the power demand.
+We optimize the hyperparameters \(\theta\) % = [\mu, k, \sigma_{f_2}, \lambda_d, \sigma_{f_3}, \alpha, \lambda] \)
+of the GP model using GPML \cite{Rasmussen2010}.
+
+The mean prediction \(\bar{y}\) with 95\% confidence interval \(\bar{y} \pm 2\sigma_y\) for a particular day are shown in Figure \ref{F:prediction}. With only 3 weeks of training data, we obtain a prediction accuracy of 94\% in terms of normalized root mean square error (NRMSE) and an RMSE of 47kW for a building with peak demand 1400kW and mean power demand 816kW.
+
+\begin{figure}[t]
+	\centering
+	\setlength\fwidth{0.43\textwidth} 
+	\setlength\hwidth{0.22\textwidth}
+	\input{figures/prediction_TotalLoad.tex}
+	\caption{Rolling forecast of the power demand for one particular day using GP model \(\mathcal{M}_1\). The actual demand is almost always within the 95\% confidence interval.}
+	\label{F:prediction}
+\end{figure}
+
+
+\subsection{Optimal Experiment Design with Gaussian Processes}
+\label{sec:modeling:oed}
+
+\note{Need to adapt the following text in this subsection.}
+
+In this section, we address the practical challenge of ``Data quality'' listed in Sec.~\ref{SS:practical_challenges}.
+
+In general, the more data we have, the better we can learn a model using machine learning algorithms.
+These data are often obtained by running experiments, called \emph{functional tests}, on the real system.
+However, in many applications, the amount of training data we can practically obtain is usually limited due to many factors, such as a short permitted duration for functional tests and operational or safety constraints of the physical system.
+For example, in the case of buildings as we will discuss in Sec.~\ref{S:casestudy}, a functional test typically involves changing various set-points of the building energy control system in order to excite the different components and operation modes of the building, so that the obtained data will reflect their behaviors.
+It is often the case that a functional test in a building is limited by the short time window during which the set-points are allowed to change, and by the maximum allowable rates of change of these set-points.
+Subject to these constraints, it is desirable to optimally design the functional tests so that the data quality is maximized, in the sense that the model obtained from the data with a specific learning technique likely has the best quality possible.
+This practice is known as \emph{optimal experiment design} (OED).
+
+
+\subsubsection{Information theoretic approach to OED}
+% \label{SS:information-theory}
+
+In this section, we present an \emph{information theoretic} approach for OED to incrementally design or select the best data points for explaining the behavior of the underlying physical system with GP.
+This is achieved by exploiting the predictive variance in GP regression \eqref{E:gp-regression}.
+The goal here is to update the hyperparameters \(\theta\) in the model \(y \sim \mathcal{GP}(\mu(x), k(x); \theta)\) as new samples are observed sequentially.
+One popular method for selecting the next sample is the point of Maximum Variance (MV), which is also widely used for Bayesian Optimization using GPs \cite{Snoek2012}.
+Since we can calculate the variance in \(y\) for any \(x\), OED based on MV can be directly computed using \eqref{E:gp-regression}.
+However, another approach which has been shown to result in better samples for learning the hyperparameters \(\theta\) is maximizing the Information Gain (IG) \cite{Krause2008}. In Sec.~\ref{S:casestudy}, we will compare both approaches in a case study.
+
+The IG approach selects the sample which adds the maximum information to the model, i.e.~which reduces the maximum uncertainty in \(\theta\). If we denote the existing data before sampling by \(\D\), then the goal is to select \(x\) that maximizes the information gain defined as
+\begin{align}
+\textstyle\argmax_x H(\theta|\D) - \EE_{y \sim \GaussianDist{\bar{y}(x)}{\sigma^2(x)}}H(\theta|\D,x,y),
+\label{E:ig:theta}
+\end{align}
+where \(H\) is the Shannon's Entropy given by
+\begin{align}
+H(\theta|\D) = -\int p(\theta|\D) \log (p(\theta|\D))d\theta.
+\end{align}
+Since \(y|x \sim \GaussianDist{\bar{y}(x)}{\sigma^2(x);\theta}\), we need to take an expectation over \(y\).
+When the dimension of \(\theta\) is large, computing entropies is typically computationally intractable.
+Using the equality \(H(\theta) - H(\theta|y) = H(y) - H(y|\theta)\), we can rewrite \eqref{E:ig:theta} equivalently as
+\begin{align}
+\argmax_x H(y|x,\D) - \EE_{\theta \sim p(\theta|\D)}H(y|x,\theta).
+\label{E:ig:y}
+\end{align}
+In this case, as the expectation is defined over \(\theta\), \eqref{E:ig:y} is much easier to compute because \(y\) is a scaler.
+For further details, we refer the reader to \cite{Houlsby2011}.
+The first term in \eqref{E:ig:y} can be calculated by marginalizing over the distribution of \(\theta|\D\):
+\begin{align}
+p(y|x,\D) &= \EE_{\theta \sim p(\theta|\D)}p(y|x,\theta,\D) \nonumber\\
+&= \int p(y|x,\theta, \D)p(\theta|\D)d\theta
+\end{align}
+for which the exact solution is difficult to compute. We therefore use an approximation described in \cite{Garnett2013}. It is shown that for \(\theta|\D \sim \GaussianDist{\bar{\theta}}{\Sigma}\), we can find a linear approximation to \(\bar{y}(x) = a^T(x)\theta+b(x)\) such that
+\begin{align}
+p(y|x,\D) \sim \GaussianDist{a^T\bar{\theta}+b}{\sigma^2+a^T\Sigma a}
+\end{align}
+in the neighborhood of \(\bar{\theta}\).
+Under the same approximation, the variance \(p(y|x,\D)\) is approximated to be
+\begin{align}
+\tilde{\sigma}^2(x) = \frac{4}{3}\sigma^2(x) + \frac{\partial \bar{y}(x)}{\partial \theta}^T \Sigma \frac{\partial \bar{y}(x)}{\partial \theta} + \nonumber \\
+\qquad\qquad \frac{1}{3\sigma^2(x)}\frac{\partial \sigma^2(x)}{\partial \theta}^T \Sigma \frac{\partial \sigma^2(x)}{\partial \theta}
+\end{align}
+evaluated at \(\bar{\theta}\) while the second term in \eqref{E:ig:y} can be written as \(H(y|x,\bar{\theta})\). 
+Finally, maximizing the information gain in \eqref{E:ig:theta} is equivalent to maximizing \(\tilde{\sigma}^2(x)/{\sigma}^2(x)\).
+Next, we apply this result for sequential optimal experiment design.
+
+% \subsection{Sequential sampling: recommending control strategies for experiment design }
+\subsubsection{Sequential experiment design with Gaussian Processes}
+% \label{SS:oed:sequential}
+
+%As said before, when the available data is limited, we need a procedure to sample new data. 
+Our goal is to update the hyperparameters \(\theta\) of the GP efficiently as new data is observed. 
+To begin the experiment design, we assume that we only know about which features \(x\) have an influence on the output \(y\). This is often known in practice. For example, for the case study in Sec.~\ref{S:casestudy}, the output of interest is the building power consumption, and the features we consider include outside air temperature and humidity, time of day to account for occupancy, control set-points and lagged terms for the output. Then a covariance structure of GP must be selected. For the example above, we chose a squared exponential kernel.
+If samples \(\D := (X,Y)\) are available, we can assign the prior distribution on \(\theta\) based on the MLE estimate \( \argmax_\theta \Pr(Y \vert X, \theta)\), i.e.~\(\theta_{\mathrm{0}} \sim \GaussianDist{\theta_{\mathrm{MLE}}}{\sigma^2_{\mathrm{init}}}\) where a suitable value of \(\sigma^2_{\mathrm{init}}\) is chosen.
+Otherwise, the Gaussian priors \(\theta_{\mathrm{0}} \sim \GaussianDist{\mu_{\mathrm{{init}}}}{\sigma^2_\mathrm{init}}\) are initialized manually.
+
+\begin{algorithm}[!tb]
+	\caption{Sequential sampling for OED based on IG}
+	\label{A:oed:sequential}
+	\begin{algorithmic}[1]
+		\Procedure{Initialization}{}
+		\If{initial \(\D := (X,Y)\)}
+		\State Compute \( \theta_{\mathrm{MLE}} = \argmax_{\theta^{\mathrm{MLE}}} \Pr(Y \vert X, \theta)\)
+		\State Assign priors \(\theta_{\mathrm{0}} \sim \GaussianDist{\theta_{\mathrm{MLE}}}{\sigma^2_{\mathrm{init}}}\)
+		\Else 
+		\State Assign priors \(\theta_{\mathrm{0}} \sim \GaussianDist{\mu_{\mathrm{{init}}}}{\sigma^2_\mathrm{init}}\)
+		\EndIf
+		\EndProcedure
+		\Procedure{Sampling}{}
+		\While{\(t<t_{\mathrm{max}}\)}
+		\State Calculate features \(x_t\) in \eqref{E:GP:features} as a function of \(u_t\)
+		\State Solve \eqref{E:oed:sampling} to calculate optimal \(u^*_t\)
+		\State Apply \(u^*_t\) to the system and measure \(y_t\)
+		\State \(\D = \D \cup (x_t,y_t) \)
+		\State Update \( \theta_{\mathrm{t}} = \argmax_{\theta^{\mathrm{MAP}}} \Pr(Y \vert X, \theta_{\mathrm{t-1}})\)
+		\EndWhile
+		\EndProcedure
+      \end{algorithmic}
+\end{algorithm}
+
+Now, consider a dynamical GP model introduced in Sec.~\ref{S:gp},
+\begin{math}
+y_{t} = f(x_t;\theta)
+\end{math}
+where
+\begin{align}
+x_{t}\!=\![y_{t-l}, \dots, y_{t-1}, u_{t-m}, \dots, u_t, w_{t-p}, \dots, w_{t-1}, w_t] \text.
+\label{E:GP:features}
+\end{align}
+At time \(t\), the current disturbance, and the lagged terms of the output, the control inputs and the disturbance are all known. The current control input \(u_t \in \RR^u \) are the only unknown features for experiment design, which we aim to select optimally.
+For physical systems, very often, we must operate under strict actuation or operation constraints. Therefore, the new sampled inputs must lie within these constraints. To this end, we solve the following optimization problem to compute optimal control set point recommendations \(u^*_t\) for experiment design
+\begin{align}
+\label{E:oed:sampling}
+\textstyle\maximize_{u_{t}} & \ \ \ \tilde{\sigma}^2(x_t)/{\sigma}^2(x_t) \\
+\st &  \ \ \ \   u_t \in \mathcal{U} \nonumber
+\end{align}
+where \(x_t\) is a function of \(u_t\). The new control input \(u^*_t\) is applied to the physical system to generate the output \(y_t\), update the parameters \(\theta\) using maximum a posteriori (MAP) estimate \cite{Garnett2013}, and we proceed to time \(t+1\). 
+The algorithm for OED is summarized in Algorithm \ref{A:oed:sequential}.
+
+As an example, in Sec.~\ref{S:casestudy} where we learn a dynamical model of a building, the proposed OED method is used to optimally sample the chilled water temperature, supply air temperature and zone-level cooling set-points, subject to operation constraints on the chiller system.
+The result is illustrated in Fig.~\ref{F:oed:example}, which shows the changes in model accuracy between several experiment design methods, for various durations of functional tests.
+For short functional test durations, our OED methods achieve much more accurate models compared to random sampling methods. The random sampling requires \(2 \times\) time to reach the same accuracy as OED. 
+Since the historical data is unperturbed, it would require even longer to provide similar accuracy.
+
+\begin{figure}[!tb]
+  \centering
+  \setlength\fwidth{0.4\textwidth}
+  \setlength\hwidth{0.18\textwidth}	
+  \input{figures/oed-acc.tex}
+  \caption{Error in prediction of power consumption on test dataset. RMSE denotes root mean square error and AE denotes absolute error. The errors are much lower with optimal experiment design based on information gain. The random sampling requires \(2 \times\) time to reach the same accuracy as OED.}
+  % \captionsetup{justification=centering}
+  \vspace{-12pt}
+  \label{F:oed:example}
+\end{figure}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:
