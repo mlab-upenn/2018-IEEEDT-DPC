@@ -1,8 +1,5 @@
 \documentclass[twocolumn]{IEEEtran}  % peerreviewca,draftcls
 
-\usepackage{xcolor}
-\newcommand{\note}[1]{\textcolor{red}{\textbf{#1}}}
-
 % Some very useful LaTeX packages include:
 % (uncomment the ones you want to load)
 
@@ -54,7 +51,9 @@
 
 
 % *** GRAPHICS RELATED PACKAGES ***
-%
+
+\usepackage{xcolor}
+
 \ifCLASSINFOpdf
   \usepackage[pdftex]{graphicx}
   % declare the path(s) where your graphic files are
@@ -343,6 +342,36 @@
 \newcommand{\C}{\mathcal{C}\xspace}
 
 
+\usepackage[tikz]{mdframed}
+
+\global\mdfdefinestyle{instructionbox}{% 
+  backgroundcolor=black!10,
+  rightline=false,
+  topline=false,
+  bottomline=false,
+  linecolor=black,
+  linewidth=2pt}
+
+\global\mdfdefinestyle{todobox}{% 
+  backgroundcolor=orange!30,
+  rightline=false,
+  topline=false,
+  bottomline=false,
+  linecolor=orange,
+  linewidth=2pt}
+
+% Commands to create notes, todos, etc.
+\newcommand{\note}[1]{\textcolor{red}{\textbf{#1}}}
+
+\newenvironment{todo}
+{\begin{mdframed}[style=todobox]}
+{\end{mdframed}}
+
+\newenvironment{instruction}
+{\begin{mdframed}[style=instructionbox]}
+{\end{mdframed}}
+
+
 % correct bad hyphenation here
 %\hyphenation{op-tical net-works semi-conduc-tor}
 
@@ -574,21 +603,28 @@ The abstract goes here.
 \label{sec:introduction}
 \input{intro}
 
-\section{Related Work}
-\label{sec:related-work}
-\input{related}
+% \section{Related Work}
+% \label{sec:related-work}
+% \input{related}
 
-\section{Learning Models of Smart Energy Systems}
+\section{From Learning to Control}
+\label{sec:framework}
+
+\begin{todo}
+  Discuss the overall framework, and highlight the major steps and challenges in learning and control.
+\end{todo}
+
+\section{Optimal Learning}% {Learning Models of Smart Energy Systems}
 \label{sec:modeling}
 \input{modeling}
 
-\section{Learning-based Control Smart Energy Systems}
+\section{Optimal Control} %{Learning-based Control Smart Energy Systems}
 \label{sec:control}
 \input{control}
 
-\section{Learning to Adapt Smart Energy Systems}
-\label{sec:adapt}
-\input{adapt}
+% \section{Learning to Adapt Smart Energy Systems}
+% \label{sec:adapt}
+% \input{adapt}
 
 \section{Implementation and Case Study}
 \label{sec:case-study}

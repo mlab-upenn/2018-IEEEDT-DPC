@@ -1,12 +1,17 @@
+\begin{todo}
+  Intro, motivation to use GP, overview of the section.
+\end{todo}
 
-\subsection{Brief Introduction to Gaussian Processes}
+\subsection{Brief Tutorial of Gaussian Processes}
 \label{sec:modeling:gp}
 
-
+\iffalse
 This section, adapted from \note{cite ICCPS}, briefly introduces Gaussian Processes (GP).
 For an in-depth treatment of GP, interested readers are referred to \cite{Rasmussen2006}.
 
-\note{Need to adapt the following text in this subsection.}
+\begin{todo}
+Need to adapt the following text in this subsection.
+\end{todo}
 
 Consider noisy observations \(y\) of an underlying function \(f: \RR^n \mapsto \RR\) through a Gaussian noise model: \(y = f(x) + \epsilon\), where \(\epsilon \sim \GaussianDist{0}{\sigma_n^2}\) and  \(x \in \RR^n\).
 A GP of $y$ is essentially a probability distribution on the observations of all possible realizations of $f$.
@@ -45,12 +50,16 @@ It is therefore \emph{highly flexible} and \emph{can capture complex behavior wi
 A GP also provides an \emph{estimate of uncertainty or confidence} in the predictions through the predictive variance.  While the predictive mean is often used as the best guess of the output, the variance can be used in a meaningful way, as we show in this paper.
 In addition, GP \emph{work well with small data sets}, which is useful for any learning application where data are not easily obtained.
 Finally, GP allow including prior knowledge of the underlying function by defining priors on the hyperparameters or constructing a particular structure of the covariance function.  This feature enables \emph{incorporating domain knowledge} into the GP model to improve its accuracy.
+\fi
 
-
-\subsection{Data-driven Modeling of Building Energy Systems with Gaussian Processes}
+\subsection{Learning Models of Building Energy Systems} % with Gaussian Processes}
 \label{sec:modeling:building}
 
-\note{Need to adapt the following text in this subsection.}
+\iffalse
+\begin{todo}
+Need to adapt the following text in this subsection.
+\end{todo}
+
 
 Consider a nonlinear dynamical system with control input \(u\), exogenous disturbance input \(w\), and output \(y\).
 At a current time step $t$, time-delayed input and output signals are called \emph{autoregressive}, for example: $y_{t-1}, u_{t-1}, w_{t-1}$.
@@ -108,12 +117,15 @@ The mean prediction \(\bar{y}\) with 95\% confidence interval \(\bar{y} \pm 2\si
 	\caption{Rolling forecast of the power demand for one particular day using GP model \(\mathcal{M}_1\). The actual demand is almost always within the 95\% confidence interval.}
 	\label{F:prediction}
 \end{figure}
+\fi
 
-
-\subsection{Optimal Experiment Design with Gaussian Processes}
+\subsection{Optimal Experiment Design} % with Gaussian Processes}
 \label{sec:modeling:oed}
 
-\note{Need to adapt the following text in this subsection.}
+\iffalse
+\begin{todo}
+Need to adapt the following text in this subsection.
+\end{todo}
 
 In this section, we address the practical challenge of ``Data quality'' listed in Sec.~\ref{SS:practical_challenges}.
 
@@ -241,7 +253,7 @@ Since the historical data is unperturbed, it would require even longer to provid
   \vspace{-12pt}
   \label{F:oed:example}
 \end{figure}
-
+\fi
 
 %%% Local Variables:
 %%% mode: latex
