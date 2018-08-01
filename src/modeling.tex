@@ -9,10 +9,6 @@
 This section, adapted from \note{cite ICCPS}, briefly introduces Gaussian Processes (GP).
 For an in-depth treatment of GP, interested readers are referred to \cite{Rasmussen2006}.
 
-\begin{todo}
-Need to adapt the following text in this subsection.
-\end{todo}
-
 Consider noisy observations \(y\) of an underlying function \(f: \RR^n \mapsto \RR\) through a Gaussian noise model: \(y = f(x) + \epsilon\), where \(\epsilon \sim \GaussianDist{0}{\sigma_n^2}\) and  \(x \in \RR^n\).
 A GP of $y$ is essentially a probability distribution on the observations of all possible realizations of $f$.
 By conditioning the GP on a finite set of observation data of $f$, one can derive the posterior distribution, which allows probabilistic inference at a new input.
@@ -21,17 +17,17 @@ By conditioning the GP on a finite set of observation data of $f$, one can deriv
 % A Gaussian Process is a collection of random variables, any finite number of which have a joint Gaussian distribution.
 % \end{definition}
 %
-A GP of \(y\) is fully specified by its mean function \(\mu(x)\) and covariance function \(k(x,x')\),
+A GP of \(y\) is fully specified by its mean function \(\mu(x)\) and covariance function \(k(x,x')\), parameterized by the \emph{hyperparameters} \(\theta\),
 \begin{align*}
 \label{E:gp:prior}
 \mu(x; \theta) &= \EE [f(x)] \\
 k(x,x'; \theta) &= \EE [(f(x)\!-\!\mu(x)) (f(x') \!-\! \mu(x'))] + \sigma_n^2 \delta(x,x') \nonumber
 \end{align*}
 where \(\delta(x,x')\) is the Kronecker delta function.
-The mean and covariance functions, hence the GP, are parameterized by the \emph{hyperparameter} vector \(\theta\), denoted by \(y \sim \mathcal{GP}(\mu, k; \theta)\).
 There exists a wide range of covariance functions and combinations to choose from \cite{Rasmussen2006}.
 
-Given the regression vectors \(X = [x_1, \dots, x_N]^T\) and the corresponding observed outputs \(Y = [y_1, \dots, y_N]^T\), we define training data by $\D = (X, Y)$. The distribution of the output \(y_\star\) corresponding to a new input vector \(x_\star\) is a Gaussian distribution \(\GaussianDist{\bar{y}_\star}{\sigma_\star^2}\), with mean and variance given by
+Given the regression vectors \(X = [x_1, \dots, x_N]^T\) and the corresponding observed outputs \(Y = [y_1, \dots, y_N]^T\).
+Unlike many other machine learning methods, with a GP, the output \(y_\star\) corresponding to an input \(x_\star\) is a random variable with a Gaussian distribution \(y_{\star} \sim \GaussianDist{\bar{y}_\star}{\sigma_\star^2}\), where
 \begin{subequations}
 \label{E:gp-regression}
 \begin{align*}
@@ -39,17 +35,17 @@ Given the regression vectors \(X = [x_1, \dots, x_N]^T\) and the corresponding o
 \sigma_\star^2 &= K_{\star \star} - K_\star K^{-1} K_\star^T \text,
 \end{align*}
 \end{subequations}
-where \(K_\star = [k(x_\star, x_1), \dots, k(x_\star, x_N)]\), \(K_{\star \star} = k(x_\star, x_\star)\), and $K$ is the covariance matrix with elements \(K_{ij} = k(x_i, x_j)\).
+in which \(K_\star = [k(x_\star, x_1), \dots, k(x_\star, x_N)]\), \(K_{\star \star} = k(x_\star, x_\star)\), and $K$ is the covariance matrix with elements \(K_{ij} = k(x_i, x_j)\).
+Note that the mean and variance are nonlinear in $x_{\star}$ and their computations scale cubically with the size of $X$ and $Y$.
 
-In theory, hyperparameters $\theta$ are random variables, which define the GP distribution on the function and whose posterior distributions are obtained by conditioning them on $\D$ using the Bayes' theorem.
+In theory, the hyperparameters $\theta$ are also random variables, which define the GP distribution on the function and whose posterior distributions are obtained by conditioning them on $(X,Y)$ using the Bayes' theorem.
 In practice, $\theta$ are often obtained by maximizing the likelihood: \(\argmax_\theta \Pr(Y \vert X, \theta)\).
 
-The covariance function \(k(x,x')\) indicates how correlated the outputs are at \(x\) and \(x'\), with the intuition that the output at an input is influenced more by the outputs of nearby inputs in the training data $\D$.
+The covariance function \(k(x,x')\) indicates how correlated the outputs are at \(x\) and \(x'\), with the intuition that the output at an input is influenced more by the outputs of nearby inputs in the training data. 
 In other words, a GP model specifies the structure of the covariance matrix of, or the relationship between, the input variables rather than a fixed structural input--output relationship.
-It is therefore \emph{highly flexible} and \emph{can capture complex behavior with fewer parameters}.
-A GP also provides an \emph{estimate of uncertainty or confidence} in the predictions through the predictive variance.  While the predictive mean is often used as the best guess of the output, the variance can be used in a meaningful way, as we show in this paper.
-In addition, GP \emph{work well with small data sets}, which is useful for any learning application where data are not easily obtained.
-Finally, GP allow including prior knowledge of the underlying function by defining priors on the hyperparameters or constructing a particular structure of the covariance function.  This feature enables \emph{incorporating domain knowledge} into the GP model to improve its accuracy.
+A GP is therefore \emph{highly flexible} and \emph{can capture complex behavior with fewer parameters}.
+Consequently, GPs generally \emph{work well with small data sets}, which is useful for any learning application where data are not easily obtained.
+A GP also provides an \emph{estimate of uncertainty or doubt} in the predictions through the predictive variance, which can be used to assess or guarantee the performance of a learning-based system.
 \fi
 
 \subsection{Learning Models of Building Energy Systems} % with Gaussian Processes}
