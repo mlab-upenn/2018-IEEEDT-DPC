@@ -5,7 +5,6 @@
 \subsection{Brief Tutorial of Gaussian Processes}
 \label{sec:modeling:gp}
 
-\iffalse
 This section, adapted from \note{cite ICCPS}, briefly introduces Gaussian Processes (GP).
 For an in-depth treatment of GP, interested readers are referred to \cite{Rasmussen2006}.
 
@@ -19,7 +18,7 @@ By conditioning the GP on a finite set of observation data of $f$, one can deriv
 %
 A GP of \(y\) is fully specified by its mean function \(\mu(x)\) and covariance function \(k(x,x')\), parameterized by the \emph{hyperparameters} \(\theta\),
 \begin{align*}
-\label{E:gp:prior}
+% \label{eq:gp-prior}
 \mu(x; \theta) &= \EE [f(x)] \\
 k(x,x'; \theta) &= \EE [(f(x)\!-\!\mu(x)) (f(x') \!-\! \mu(x'))] + \sigma_n^2 \delta(x,x') \nonumber
 \end{align*}
@@ -46,48 +45,48 @@ In other words, a GP model specifies the structure of the covariance matrix of, 
 A GP is therefore \emph{highly flexible} and \emph{can capture complex behavior with fewer parameters}.
 Consequently, GPs generally \emph{work well with small data sets}, which is useful for any learning application where data are not easily obtained.
 A GP also provides an \emph{estimate of uncertainty or doubt} in the predictions through the predictive variance, which can be used to assess or guarantee the performance of a learning-based system.
-\fi
 
 \subsection{Learning Models of Building Energy Systems} % with Gaussian Processes}
 \label{sec:modeling:building}
 
-\iffalse
-\begin{todo}
-Need to adapt the following text in this subsection.
-\end{todo}
+A buiding is a complex and large-scale physical system.
+The energy system of a medium-sized building may have thousands of variables related to temperature, pressure, flow, power, and other physical quantities.
+In a smart building, these variables are usually managed by the building's SCADA system, which contains a hierarchy of control loops that regulate these variables in all components of the energy system.
+This work focuses on high-level supervisory control of smart buildings in two important aspects: electrical energy consumption (specifically total power demand) and occupant comfort (specifically temperature in building zones).
+
+Given a building system, we aim to model its power demand and zone temperature behavior from data that can be measured directly from installed sensors such as thermostats, multimeters and weather forecast.
+For this purpose, two types of models are learned: \(\mathcal{M}_{\mathrm{P}}\) for predicting the power demand and \(\mathcal{M}_{\mathrm{T}}\) for predicting the temperature of a particular zone in the building.
+The following variables are used for learning these models:
+\begin{itemize}
+\item \textit{Weather variables \(d^w\):} such as outside air temperature and humidity, obtained from historical weather data.
+\item \textit{Proxy variables \(d^p\):} such as time of day and day of week, which indicate occupancy, system operation schedules, and periodic trends.
+%\textit{Fixed schedules  \(d^s\):} kitchen cooling set point, corridor cooling set point - these set points follow predefined rules. 
+\item \textit{Control variables \(u\):} such as cooling, supply air temperature and chilled water temperature setpoints.  These variables influence how key control loops in a building energy system, such as Air-Handling Unitd (AHU) and chillers, operate.  They will be optimized in our control algorithms.
+\item \textit{Output variable \(y\):} total power consumption for \(\mathcal{M}_{\mathrm{P}}\) or zone temperature for \(\mathcal{M}_{\mathrm{T}}\) -- this is the output of interest, to be predicted using all the above variables.
+\end{itemize}
+These variables, called features for the machine learning models, are the most influential to the power usage and thermal comfort in a building, among all building system variables.
+They constitute a set of variables that achieve a good balance between modeling accuracy on one hand and modeling simplicity and cost on the other hand.
 
 
-Consider a nonlinear dynamical system with control input \(u\), exogenous disturbance input \(w\), and output \(y\).
-At a current time step $t$, time-delayed input and output signals are called \emph{autoregressive}, for example: $y_{t-1}, u_{t-1}, w_{t-1}$.
-By feeding autoregressive inputs and outputs to a GP as regressors, we can model the dynamic behavior of the system \cite{Kocijan2016}.
-Specifically, the regressor vector $x_{t}$ at time step $t$ would be
+As can be seen from the above notations, we classify these variables into control inputs \(u\), exogenous disturbance inputs \(d\), and output \(y\).
+Because building systems are dynamic, we feed time-delayed, also known as \emph{autoregressive}, input and output signals to the models as features to account for the memory effect of the dynamic systems.
+In particular, at time step $t$, the regressor vector $x_{t}$, \ie the complete input vector of the model, would be
 \begin{equation*}
-x_{t}\!=\![y_{t-l}, \dots, y_{t-1}, u_{t-m}, \dots, u_t, w_{t-p}, \dots, w_{t-1}, w_t] \text.
+x_{t}\!=\![y_{t-l}, \dots, y_{t-1}, u_{t-m}, \dots, u_t, d_{t-p}, \dots, d_{t-1}, d_t] \text,
 \end{equation*}
 where \(l\), \(m\), and \(p\) are respectively the lags for autoregressive outputs, control inputs, and disturbances.
-Note that \(u_t\) and \(w_t\) are the current control and disturbance inputs.
-The dynamical GP
+
+Given training data of input and output pairs $\{x_{t}, y_{t}\}$, a model can be learned.
+%
+In this work, we model the power dynamics ($\mathcal{M}_{\mathrm{P}}$) and temperature dynamics ($\mathcal{M}_{\mathrm{T}}$) with GPs for their ability to work well with small datasets and to provide estimates of predictive uncertainty.
+Specifically, $\mathcal{M}_{\mathrm{P}}$ or $\mathcal{M}_{\mathrm{T}}$ is a GP of the respective output
 \begin{math}
-y_{t} = f(x_t)
+  y_{t} \sim \GaussianDist{\bar{y}\left(x_{t}\right)}{\sigma^{2}\left(x_{t}\right)} \text.
 \end{math}
-can then be trained from data in the same way as any other GPs.
 
-In a multistep simulation of a dynamical GP, the autoregressive outputs fed to the model beyond the first step are random variables, resulting in more and more complex output distributions as we go further.
-Therefore, it involves uncertainty propagation through the model, which would complicate the computation of the model significantly.
-\cite{nghiemetal16gp} showed that a simple simulation method called \emph{zero-variance method}, which replaces the autoregressive signals with their corresponding expected values, could achieve sufficient prediction accuracy while benefitting from computational simplicity.
-In this paper, the zero-variance method was selected for predicting future outputs in optimization formulations.
-
-We use a U.S. Department of Energy’s Commercial Reference Building (DoE CRB) simulated in EnergyPlus as the virtual test-bed building. It is a large 12-story office building consisting of 19 zones with a total area of 498,588 sq.ft. Under peak load conditions the office can consume up to 1.4 MW of power.
-Our aim is to model the building's power demand and zone temperature behavior from data that can be measured directly from installed sensors such as thermostats, multimeters and weather forecast.
-We learn two GP models: \(\mathcal{M}_1\) for predicting the power demand and \(\mathcal{M}_2\) for predicting the temperature of a particular zone in the building.
-The following feature variables are used for training:
-\begin{itemize}
-\item \textit{Weather variables \(d^w\):} such as outside temperature and humidity, which are derived from historical weather data.
-\item \textit{Proxy variables \(d^p\):} such as time of day and day of week, which indicate occupancy and periodic trends.
-%\textit{Fixed schedules  \(d^s\):} kitchen cooling set point, corridor cooling set point - these set points follow predefined rules. 
-\item \textit{Control variables \(u\):} such as cooling, supply air temperature and chilled water setpoints -- these variables will be optimized in MPC.
-\item \textit{Output variable \(y\):} total power consumption for\(\mathcal{M}_1\) and zone temperature for \(\mathcal{M}_2\) -- this is the output of interest which we will predict using all the above features in the model.
-\end{itemize}
+\begin{todo}
+  Write about mean and covariance function. Maybe write about multistep simulation, or leave it to the control part.
+\end{todo}
 
 Using these measurement data, we learn autoregressive GP models \(\mathcal{M}_1\) and \(\mathcal{M}_2\), and use the zero-variance method to predict the future output \(y_{t+\tau}\), where $t$ is the current time and \( \tau \ge 0\).
 Specifically,
@@ -103,22 +102,24 @@ For the GP, we use a constant mean function and the special covariance function 
 We optimize the hyperparameters \(\theta\) % = [\mu, k, \sigma_{f_2}, \lambda_d, \sigma_{f_3}, \alpha, \lambda] \)
 of the GP model using GPML \cite{Rasmussen2010}.
 
-The mean prediction \(\bar{y}\) with 95\% confidence interval \(\bar{y} \pm 2\sigma_y\) for a particular day are shown in Figure \ref{F:prediction}. With only 3 weeks of training data, we obtain a prediction accuracy of 94\% in terms of normalized root mean square error (NRMSE) and an RMSE of 47kW for a building with peak demand 1400kW and mean power demand 816kW.
 
-\begin{figure}[t]
-	\centering
-	\setlength\fwidth{0.43\textwidth} 
-	\setlength\hwidth{0.22\textwidth}
-	\input{figures/prediction_TotalLoad.tex}
-	\caption{Rolling forecast of the power demand for one particular day using GP model \(\mathcal{M}_1\). The actual demand is almost always within the 95\% confidence interval.}
-	\label{F:prediction}
-\end{figure}
-\fi
+In a multistep simulation of a dynamical GP, the autoregressive outputs fed to the model beyond the first step are random variables, resulting in more and more complex output distributions as we go further.
+Therefore, it involves uncertainty propagation through the model, which would complicate the computation of the model significantly.
+\cite{nghiemetal16gp} showed that a simple simulation method called \emph{zero-variance method}, which replaces the autoregressive signals with their corresponding expected values, could achieve sufficient prediction accuracy while benefitting from computational simplicity.
+In this paper, the zero-variance method was selected for predicting future outputs in optimization formulations.
+
+% \begin{figure}[t]
+% 	\centering
+% 	\setlength\fwidth{0.43\textwidth} 
+% 	\setlength\hwidth{0.22\textwidth}
+% 	\input{figures/prediction_TotalLoad.tex}
+% 	\caption{Rolling forecast of the power demand for one particular day using GP model \(\mathcal{M}_1\). The actual demand is almost always within the 95\% confidence interval.}
+% 	\label{F:prediction}
+% \end{figure}
 
 \subsection{Optimal Experiment Design} % with Gaussian Processes}
 \label{sec:modeling:oed}
 
-\iffalse
 \begin{todo}
 Need to adapt the following text in this subsection.
 \end{todo}
@@ -249,7 +250,6 @@ Since the historical data is unperturbed, it would require even longer to provid
   \vspace{-12pt}
   \label{F:oed:example}
 \end{figure}
-\fi
 
 %%% Local Variables:
 %%% mode: latex
