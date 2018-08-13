@@ -1,5 +1,6 @@
 \begin{todo}
   Using GP in MPC. Briefly present various applications (as in BPACS paper).
+  Adapt the following text.
 \end{todo}
 
 Using these measurement data, we learn autoregressive GP models \(\mathcal{M}_1\) and \(\mathcal{M}_2\), and use the zero-variance method to predict the future output \(y_{t+\tau}\), where $t$ is the current time and \( \tau \ge 0\).
@@ -12,7 +13,7 @@ x_{t + \tau} = [\bar y_{t+ \tau-l}, \dots, \bar y_{t+ \tau-1}, u_{t+ \tau-m}, \d
 \end{gather}
 in which \(w:=[d^w, d^p]\).
 It is assumed that at time \(t\), \(w_{t+\tau}\) are available \(\forall \tau \) from forecasts or fixed rules as applicable.
-For the GP, we use a constant mean function and the special covariance function proposed in our previous work \cite{nghiemetal16gp} to capture both the temporal pattern of the energy usage and the effect of non-temporal features, such as weather conditions and temperature setpoints, on the power demand.
+
 We optimize the hyperparameters \(\theta\) % = [\mu, k, \sigma_{f_2}, \lambda_d, \sigma_{f_3}, \alpha, \lambda] \)
 of the GP model using GPML \cite{Rasmussen2010}.
 
