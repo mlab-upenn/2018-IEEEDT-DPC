@@ -34,7 +34,7 @@ We are interested in solving the following finite-horizon control problem
 \end{align}
 where the constraints hold for all \(\tau \in \{0,\dots,N-1\}\).
 The signal $y_{\mathrm{ref}}$ is a reference power demand trajectory the building should follow as closely as possible.
-The output variances $\sigma^{2}_{y}}$ are included in the cost function to penalize highly uncertain predictions; in other words, we improve the control performance confidence by exploiting the capability of the GP model to provide predictive uncertainty measures.
+The output variances $\sigma^{2}_{y}$ are included in the cost function to penalize highly uncertain predictions; in other words, we improve the control performance confidence by exploiting the capability of the GP model to provide predictive uncertainty measures.
 
 We solve the optimization problem~\eqref{E:mpc:tracking} to compute optimal \(u_{t}^*, \dots, u_{t+N-1}^*\), apply \(u_{t}^*\) to the system, proceed to the next time step where we solve \eqref{E:mpc:tracking} at \(t+1\), and repeat.
 Although all the constraints in \eqref{E:mpc:tracking} are of analytical forms, the optimization can be computationally hard to solve due to the high nonlinearity and computational burden of the GP.
@@ -49,32 +49,23 @@ This formulation aims to minimize the building's energy usage while meeting ther
 This is always desired since in practice the consumers want to minimize their electricity bills but maintain acceptable thermal comfort for building occupants.
 We will require both GP models \(\mathcal{M}_{\mathrm{P}}\) and \(\mathcal{M}_{\mathrm{T}}\).
 Specifically, \(\mathcal{M}_{\mathrm{T}}\) is used to enforce thermal comfort constraints in the optimization problem below:
-\begin{align}
-&\minimize \ \sum_{\tau=0}^{N-1} \bar{y}_{t+\tau} + \lambda \sigma^2_{y,t+\tau} \label{E:mpc:climate} \\
-& 
-\begin{aligned}
-  \text{subject to}\ \  & \text{Dynamic equations \eqref{eq:mean-variance-dynamics} of $\mathcal{M}_{\mathrm{P}}$} \\
-  & \begin{rcases}
-    \bar{T}_{t+\tau} = \mu(x_{t+\tau}) + K_\star K^{-1} (Y - \mu(X)) \nonumber\\
-    \sigma^2_{T,t+\tau} = K_{\star \star} - K_\star K^{-1} K_\star^T \\
-    \Pr(T_{t+\tau} \in \mathcal{T}) \geq 1 - \epsilon \nonumber
-  \end{rcases} \mathcal{M}_{\mathrm{T}} \\
-  & \ u_{t+\tau} \in \mathcal{U} \nonumber
-\end{aligned}
-\end{align}
+\begin{subequations}
+  \label{E:mpc:climate}
+  \begin{align}
+    \minimize \ & \sum_{\tau=0}^{N-1} \bar{y}_{t+\tau} + \lambda \sigma^2_{y,t+\tau} \\
+    \text{subject to}\ \  & \text{Dynamic equations \eqref{eq:mean-variance-dynamics} of $\mathcal{M}_{\mathrm{P}}$} \\
+                &\bar{T}_{t+\tau} = \mu(x_{t+\tau}) + K_\star K^{-1} (Y - \mu(X)) \label{E:mpc:climate:tempmean} \\
+                &\sigma^2_{T,t+\tau} = K_{\star \star} - K_\star K^{-1} K_\star^T \label{E:mpc:climate:tempvar} \\
+                &\Pr(T_{t+\tau} \in \mathcal{T}) \geq 1 - \epsilon \label{E:mpc:climate:chance} \\
+                &u_{t+\tau} \in \mathcal{U} 
+  \end{align}
+\end{subequations}
 Here, \(\bar{T},\sigma^2_{T}\) denote the mean and variance of the temperature output returned by \(\mathcal{M}_{\mathrm{T}}\). 
-The second-to-last constraint is probabilistic, which states that the zone temperature must stay inside a set $\mathcal{T}$ with a probability of at least $1 - \epsilon$.
+The constraints~\eqref{E:mpc:climate:tempmean} and \eqref{E:mpc:climate:tempvar} describe the zone temperature dynamics by the GP model $\mathcal{M}_{\mathrm{T}}$.
+The constraint~\eqref{E:mpc:climate:chance} is a chance constraint, which states that the zone temperature must stay inside a set $\mathcal{T}$ with a probability of at least $1 - \epsilon$.
 Our goal is to find the control inputs \(u\) that minimize the power consumption while maintaining thermal comfort with high probability. 
 We again solve the optimization problem~\eqref{E:mpc:climate} to compute optimal \(u_{t}^*, \dots, u_{t+N-1}^*\), apply \(u_{t}^*\) to the system and repeat at time \(t+1\).
 
-\begin{todo}
-  Using GP in MPC. Briefly present various applications (as in BPACS paper).
-  Adapt the following text.
-\end{todo}
-We consider a Demand Response scenario when the utility company notifies this building to minimize the power consumption between 11am - 2pm.
-Between 2pm - 3pm, the controller switches to tracking the baseline consumption based on \eqref{E:mpc:tracking} to prevent a sudden kickback.
-The status of the SCADA system at 3pm is shown in Figure \ref{F:climate}.
-The controller exploits the available energy flexibility in providing maximum curtailment while ensuring that the zone temperature is always between the prescribed range \(23-25^\circ C\).
 
 
 %%% Local Variables:
