@@ -15,7 +15,7 @@ This practice is known as \emph{optimal experiment design} (OED).
 \subsection{Brief Tutorial of Gaussian Processes}
 \label{sec:modeling:gp}
 
-This section, adapted from \cite{JainICCPS2018} briefly introduces Gaussian Processes (GP).
+This section, adapted from \cite{JainICCPS2018}, briefly introduces Gaussian Processes (GP).
 For an in-depth treatment of GP, interested readers are referred to \cite{Rasmussen2006}.
 
 Consider noisy observations \(y\) of an underlying function \(f: \RR^n \mapsto \RR\) through a Gaussian noise model: \(y = f(x) + \epsilon\), where \(\epsilon \sim \GaussianDist{0}{\sigma_n^2}\) and  \(x \in \RR^n\).
@@ -38,11 +38,11 @@ There exists a wide range of covariance functions and combinations to choose fro
 Given the regression vectors \(X = [x_1, \dots, x_N]^T\) and the corresponding observed outputs \(Y = [y_1, \dots, y_N]^T\).
 Unlike many other machine learning methods, with a GP, the output \(y_\star\) corresponding to an input \(x_\star\) is a random variable with a Gaussian distribution \(y_{\star} \sim \GaussianDist{\bar{y}_\star}{\sigma_\star^2}\), where
 \begin{subequations}
-\label{E:gp-regression}
-\begin{align*}
+\label{eq:gp-regression}
+\begin{align}
 \bar{y}_\star &= \mu(x_\star) + K_\star K^{-1} (Y - \mu(X))\\
 \sigma_\star^2 &= K_{\star \star} - K_\star K^{-1} K_\star^T \text,
-\end{align*}
+\end{align}
 \end{subequations}
 in which \(K_\star = [k(x_\star, x_1), \dots, k(x_\star, x_N)]\), \(K_{\star \star} = k(x_\star, x_\star)\), and $K$ is the covariance matrix with elements \(K_{ij} = k(x_i, x_j)\).
 Note that the mean and variance are nonlinear in $x_{\star}$ and their computations scale cubically with the size of $X$ and $Y$.
@@ -68,17 +68,20 @@ Given a building system, we aim to model its power demand and zone temperature b
 For this purpose, two types of models are learned: \(\mathcal{M}_{\mathrm{P}}\) for predicting the power demand and \(\mathcal{M}_{\mathrm{T}}\) for predicting the temperature of a particular zone in the building.
 The following variables are used for learning these models:
 \begin{itemize}
-\item \textit{Weather variables \(d^w\):} such as outside air temperature and humidity, obtained from historical weather data.
-\item \textit{Proxy variables \(d^p\):} such as time of day and day of week, which indicate occupancy, system operation schedules, and periodic trends.
-%\textit{Fixed schedules  \(d^s\):} kitchen cooling set point, corridor cooling set point - these set points follow predefined rules. 
-\item \textit{Control variables \(u\):} such as cooling, supply air temperature and chilled water temperature setpoints.  These variables influence how key control loops in a building energy system, such as Air-Handling Unitd (AHU) and chillers, operate.  They will be optimized in our control algorithms.
+\item \textit{Control variables \(u\):} These variables influence how key control loops in a building energy system, such as Air-Handling Unitd (AHU) and chillers, operate.  They are selected based on which inputs we can and want to manipulate in order to achieve the desired behavior of the building, such as cooling, supply air temperature and chilled water temperature setpoints.  They will be optimized in our control algorithms.
 \item \textit{Output variable \(y\):} total power consumption for \(\mathcal{M}_{\mathrm{P}}\) or zone temperature for \(\mathcal{M}_{\mathrm{T}}\) -- this is the output of interest, to be predicted using all the above variables.
+\item \textit{Disturbance variables \(d\):} These are variables which we do not have control over, or do not want to control, but definitely have influence on the interested aspect of the building (power demand in the case of $\mathcal{M}_{\mathrm{P}}$ and zone temperature in the case of $\mathcal{M}_{\mathrm{T}}$).  They typically include:
+  \begin{itemize}
+  \item \emph{Weather variables} such as outside air temperature and humidity, obtained from historical weather data.
+  \item \emph{Temporal variables} such as time of day and day of week, which indicate occupancy, system operation schedules, and periodic trends.
+  \item \emph{Fixed schedules} such as preset setpoints that we do not control and therefore are not included in the control variables $u$.
+  \end{itemize}
 \end{itemize}
 These variables, called features for the machine learning models, are the most influential to the power usage and thermal comfort in a building, among all building system variables.
 They constitute a set of variables that achieve a good balance between modeling accuracy on one hand and modeling simplicity and cost on the other hand.
 
 
-As can be seen from the above notations, we classify these variables into control inputs \(u\), exogenous disturbance inputs \(d\) ($d^{w}$ and $d^{p}$), and output \(y\).
+As can be seen from the above notations, we classify these variables into control inputs \(u\), exogenous disturbance inputs \(d\), and output \(y\).
 Because building systems are dynamic, we feed time-delayed, also known as \emph{autoregressive}, input and output signals to the models as features to account for the memory effect of the dynamic systems.
 In particular, at time step $t$, the regressor vector $x_{t}$, \ie the complete input vector of the model, would be
 \begin{equation}

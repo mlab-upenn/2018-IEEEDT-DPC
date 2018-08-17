@@ -1,27 +1,80 @@
+Once a GP model, $\mathcal{M}_{\mathrm{P}}$ or $\mathcal{M}_{\mathrm{T}}$, of a building has been learnt, it can be used to develop a data-driven predictive controller for the building.
+This section will describe the formulations of two GP-based building controllers.
+
+In a predictive control algorithm, a process model, which is a GP model in our case, is used to predict the process output at multiple future time steps over a fixed horizon.
+In such a multistep simulation of a dynamical GP, the autoregressive outputs fed to the model (recall $x_{t}$ in \eqref{E:GP:features}) beyond the first step are random variables, resulting in more and more complex output distributions as we go further.
+Therefore, uncertainty propagation through the model should be accounted for, which would complicate the computation of the model significantly.
+In \cite{nghiemetal16gp} we showed that a simple simulation method called \emph{zero-variance method}, which replaces the autoregressive output signals with their corresponding expected values, could achieve sufficient prediction accuracy while keeping the computation fairly simple and scalable.
+We will use the zero-variance method in this paper.
+Specifically, at time step $t$, the predicted output at a future time step $t+\tau$, for $\tau \geq 0$, is $y_{t+\tau} \sim \GaussianDist{\bar{y}_{t+\tau}}{\sigma^2_{y, t+\tau}}$ where
+\begin{align}
+  \label{eq:mean-variance-dynamics}
+  \bar{y}_{t+\tau} =& \mu(x_{t+\tau}) + K_\star K^{-1} (Y - \mu(X)) \\
+  \sigma^2_{y,t+\tau} =& K_{\star \star} - K_\star K^{-1} K_\star^T \nonumber \\
+  x_{t + \tau} =& [\bar y_{t+ \tau-l}, \dots, \bar y_{t+ \tau-1}, u_{t+ \tau-m}, \dots, u_{t+ \tau}, \nonumber \\
+                      & \quad d_{t+ \tau-p}, \dots, d_{t+ \tau-1}, d_{t+ \tau}]\text, \nonumber
+\end{align}
+in which $K$, $K_{\star}$, and $K_{\star\star}$ are defined in~\eqref{eq:gp-regression}.
+Here, it is assumed that at time \(t\), all future disturbances \(d_{t+i}\) in the above $x_{t+\tau}$ are available from forecasts or fixed rules as applicable.
+We also fix the horizon length to $N$ time steps.
+
+
+\subsection{Demand Tracking Control}
+
+This predictive control formulation fits demand response applications where a customer -- a building in this case -- must curtail its power demand by a certain amount from its baseline, or must track an Area Control Signal (ACS) sent from the grid operator.
+For this formulation we only require GP model \(\mathcal{M}_{\mathrm{P}}\).
+We are interested in solving the following finite-horizon control problem
+\begin{align}
+  &\minimize \sum_{\tau=0}^{N-1} (\bar{y}_{t+\tau} - y_{\mathrm{ref},t+\tau})^2 + \lambda \sigma^2_{y,t+\tau} \label{E:mpc:tracking} \\
+  & 
+    \begin{aligned}
+      \text{subject to}\ \  & \text{Dynamic equations \eqref{eq:mean-variance-dynamics} of $\mathcal{M}_{\mathrm{P}}$} \\
+      & u_{t+\tau} \in \mathcal{U} \nonumber 
+    \end{aligned}
+\end{align}
+where the constraints hold for all \(\tau \in \{0,\dots,N-1\}\).
+The signal $y_{\mathrm{ref}}$ is a reference power demand trajectory the building should follow as closely as possible.
+The output variances $\sigma^{2}_{y}}$ are included in the cost function to penalize highly uncertain predictions; in other words, we improve the control performance confidence by exploiting the capability of the GP model to provide predictive uncertainty measures.
+
+We solve the optimization problem~\eqref{E:mpc:tracking} to compute optimal \(u_{t}^*, \dots, u_{t+N-1}^*\), apply \(u_{t}^*\) to the system, proceed to the next time step where we solve \eqref{E:mpc:tracking} at \(t+1\), and repeat.
+Although all the constraints in \eqref{E:mpc:tracking} are of analytical forms, the optimization can be computationally hard to solve due to the high nonlinearity and computational burden of the GP.
+% For the case study in Sec.~\ref{S:casestudy} we choose a combination of a squared exponential and rational quadratic kernel which results in nonconvex problem.
+We use the nonlinear solver IPOPT \cite{Waechter2009b} and the optimization modeling framework CasADi \cite{Andersson2013b} to solve \eqref{E:mpc:tracking}.
+
+
+\subsection{Climate Control with Minimum Energy Usage}
+
+
+This formulation aims to minimize the building's energy usage while meeting thermal comfort and operation constaints. 
+This is always desired since in practice the consumers want to minimize their electricity bills but maintain acceptable thermal comfort for building occupants.
+We will require both GP models \(\mathcal{M}_{\mathrm{P}}\) and \(\mathcal{M}_{\mathrm{T}}\).
+Specifically, \(\mathcal{M}_{\mathrm{T}}\) is used to enforce thermal comfort constraints in the optimization problem below:
+\begin{align}
+&\minimize \ \sum_{\tau=0}^{N-1} \bar{y}_{t+\tau} + \lambda \sigma^2_{y,t+\tau} \label{E:mpc:climate} \\
+& 
+\begin{aligned}
+  \text{subject to}\ \  & \text{Dynamic equations \eqref{eq:mean-variance-dynamics} of $\mathcal{M}_{\mathrm{P}}$} \\
+  & \begin{rcases}
+    \bar{T}_{t+\tau} = \mu(x_{t+\tau}) + K_\star K^{-1} (Y - \mu(X)) \nonumber\\
+    \sigma^2_{T,t+\tau} = K_{\star \star} - K_\star K^{-1} K_\star^T \\
+    \Pr(T_{t+\tau} \in \mathcal{T}) \geq 1 - \epsilon \nonumber
+  \end{rcases} \mathcal{M}_{\mathrm{T}} \\
+  & \ u_{t+\tau} \in \mathcal{U} \nonumber
+\end{aligned}
+\end{align}
+Here, \(\bar{T},\sigma^2_{T}\) denote the mean and variance of the temperature output returned by \(\mathcal{M}_{\mathrm{T}}\). 
+The second-to-last constraint is probabilistic, which states that the zone temperature must stay inside a set $\mathcal{T}$ with a probability of at least $1 - \epsilon$.
+Our goal is to find the control inputs \(u\) that minimize the power consumption while maintaining thermal comfort with high probability. 
+We again solve the optimization problem~\eqref{E:mpc:climate} to compute optimal \(u_{t}^*, \dots, u_{t+N-1}^*\), apply \(u_{t}^*\) to the system and repeat at time \(t+1\).
+
 \begin{todo}
   Using GP in MPC. Briefly present various applications (as in BPACS paper).
   Adapt the following text.
 \end{todo}
-
-Using these measurement data, we learn autoregressive GP models \(\mathcal{M}_1\) and \(\mathcal{M}_2\), and use the zero-variance method to predict the future output \(y_{t+\tau}\), where $t$ is the current time and \( \tau \ge 0\).
-Specifically,
-\begin{gather}
-\label{eq:dpc:prediction}
-y_{t+\tau} \sim \GaussianDist{\bar{y}_{t+\tau} = g_{\mathrm m}(x_{t+\tau})}{\sigma^2_{y, t+\tau} = g_{\mathrm v}(x_{t+\tau})}, \\
-x_{t + \tau} = [\bar y_{t+ \tau-l}, \dots, \bar y_{t+ \tau-1}, u_{t+ \tau-m}, \dots, u_{t+ \tau}, \nonumber \\
-\qquad\qquad\qquad\qquad  w_{t+ \tau-p}, \dots, w_{t+ \tau-1}, w_{t+ \tau}]\text, \nonumber
-\end{gather}
-in which \(w:=[d^w, d^p]\).
-It is assumed that at time \(t\), \(w_{t+\tau}\) are available \(\forall \tau \) from forecasts or fixed rules as applicable.
-
-We optimize the hyperparameters \(\theta\) % = [\mu, k, \sigma_{f_2}, \lambda_d, \sigma_{f_3}, \alpha, \lambda] \)
-of the GP model using GPML \cite{Rasmussen2010}.
-
-
-In a multistep simulation of a dynamical GP, the autoregressive outputs fed to the model beyond the first step are random variables, resulting in more and more complex output distributions as we go further.
-Therefore, it involves uncertainty propagation through the model, which would complicate the computation of the model significantly.
-\cite{nghiemetal16gp} showed that a simple simulation method called \emph{zero-variance method}, which replaces the autoregressive signals with their corresponding expected values, could achieve sufficient prediction accuracy while benefitting from computational simplicity.
-In this paper, the zero-variance method was selected for predicting future outputs in optimization formulations.
+We consider a Demand Response scenario when the utility company notifies this building to minimize the power consumption between 11am - 2pm.
+Between 2pm - 3pm, the controller switches to tracking the baseline consumption based on \eqref{E:mpc:tracking} to prevent a sudden kickback.
+The status of the SCADA system at 3pm is shown in Figure \ref{F:climate}.
+The controller exploits the available energy flexibility in providing maximum curtailment while ensuring that the zone temperature is always between the prescribed range \(23-25^\circ C\).
 
 
 %%% Local Variables:
