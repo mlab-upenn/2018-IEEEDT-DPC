@@ -1,16 +1,11 @@
-\begin{todo}
-  Intro, motivation to use GP, overview of the section.
-  Adapt following text.
-\end{todo}
-
+Data-driven modeling of a complex physical system such as a building generally consists of: (1) selecting the model type, (2) constructing the model structure (based on certain insights of the system), (3) optimally designing and running experiments to obtain data, and (4) training and validating the model from data.
 In general, the more data we have, the better we can learn a model using machine learning algorithms.
-These data are often obtained by running experiments, called \emph{functional tests}, on the real system.
-However, in many applications, the amount of training data we can practically obtain is usually limited due to many factors, such as a short permitted duration for functional tests and operational or safety constraints of the physical system.
-For example, in the case of buildings as we will discuss in Sec.~\ref{S:casestudy}, a functional test typically involves changing various set-points of the building energy control system in order to excite the different components and operation modes of the building, so that the obtained data will reflect their behaviors.
-It is often the case that a functional test in a building is limited by the short time window during which the set-points are allowed to change, and by the maximum allowable rates of change of these set-points.
-Subject to these constraints, it is desirable to optimally design the functional tests so that the data quality is maximized, in the sense that the model obtained from the data with a specific learning technique likely has the best quality possible.
-This practice is known as \emph{optimal experiment design} (OED).
-
+However, as discussed in Section~\ref{sec:framework}, for many physical systems, the amount of training data we can practically obtain is usually limited due to many factors.
+In addition, operation and safety constraints in such a physical system typically require deterministic or probabilistic guarantees on the performance of the model and the closed-loop control system.
+Consequently, it is desirable to select a machine learning model type that is highly flexible, that works well with limited data sets, and that can provide estimates of model uncertainty.
+In this work, Gaussian Processes (GPs) are chosen, as they possess all these properties.
+Section~\ref{sec:modeling:gp} gives a brief introduction to GPs, followed by a detailed description of how building systems are modeled by GPs in Section~\ref{sec:modeling:building}.
+In Section~\ref{sec:modeling:oed}, we present our method for optimal experiment design with GPs.
 
 \subsection{Brief Tutorial of Gaussian Processes}
 \label{sec:modeling:gp}
@@ -55,6 +50,7 @@ In other words, a GP model specifies the structure of the covariance matrix of, 
 A GP is therefore \emph{highly flexible} and \emph{can capture complex behavior with fewer parameters}.
 Consequently, GPs generally \emph{work well with small data sets}, which is useful for any learning application where data are not easily obtained.
 A GP also provides an \emph{estimate of uncertainty or doubt} in the predictions through the predictive variance, which can be used to assess or guarantee the performance of a learning-based system.
+For these advantages, GPs are selected for our framework.
 
 \subsection{Learning Models of Building Energy Systems} % with Gaussian Processes}
 \label{sec:modeling:building}
