@@ -1,6 +1,60 @@
-\begin{todo}
-Motivation, overview, related work, contributions.
-\end{todo}
+As reported in 2015 by the U.S.\ Department of Energy \cite{doe2015quadrennial}, the building sector consumes 47.6\% of all energy produced and 76\% of all electricity produced in the United States and is responsible for 44.6\% of CO2 emissions.
+Moreover, it is expected that advanced building control systems can increase building energy efficiency by up to 30\% without upgrading the existing appliances and infrastructure.
+These advanced control systems, often with a model-based optimization approach, enable optimizing the performance of building energy systems while maintaining required operation and safety constraints.
+
+For example, in a large commercial buildings, the following questions may be of our interest:
+(1) \emph{What are the optimal ways to cool or heat the facility in order to save energy and reduce carbon footprint?}; and
+(2) \emph{What should the optimal set-points be to curtail power consumption by a certain amount during specified hours tomorrow}?
+The first, an automatic climate control system that minimizes the energy consumption, is desirable under all circumstances and provides a huge financial incentive to large facilities and data centers.
+The latter is crucial in Demand Response (DR) scenarios when the price of electricity peaks due to high volatility.
+As an example, in January 2014, the east coast electricity grid, managed by PJM, experienced an 86-fold increase in the price of electricity from \$31/MWh to \$2,680/MWh in a matter of 10 minutes.
+
+Efficient control of buildings requires high fidelity models that capture the time evolution of certain states %of interest
+of the building, for instance how the power consumption and zone temperature are affected by changes in outside weather conditions and in the chilled-water or supply-air-temperature set-points.
+An advanced control algorithm such as Model Predictive Control (MPC) usually uses such models to predict the future state of the building over a finite horizon then optimize the building performance with a specified objective like energy consumption while meeting thermal comfort and operation constraints.
+MPC has been proven to be a very powerful approach for multivariable control systems with complex objectives and input and output constraints.
+However, a major drawback of MPC is its requirement of a reasonably accurate mathematical model of the system.
+
+The classes of models commonly used in MPC, typically called \emph{white-box} or \emph{grey-box} models, are derived from first principles based on physics. 
+While accurate, % and relatively straightforward to obtain for simple to moderately complex physical systems, 
+such model development and engineering usually require particularly high effort, expert knowledge, and periodic re-tuning of the model, especially in the case of such complex physical systems as buildings.
+This is because these models require detailed information about the building design, equipment layout plans, material properties, and equipment and operational schedules. 
+Furthermore, as each building is designed and used in a different way, the model and modeling process developed for one building are not easily transferred to another building.
+These drawbacks effectively limit the use of physics-based models for MPC in buildings.
+Indeed, after years of work on using first-principle models for MPC for advanced building control, multiple authors \cite{Sturzenegger2016,vzavcekova2014} \note{May keep onely one citation} have concluded that the biggest hurdle to mass adoption of intelligent building control is the cost and effort required to capture accurate dynamical models of the buildings.
+
+Machine learning, as a field that leverages statistical techniques and computer algorithms to learn models, often automatically, from data, offers a promising alternative approach.
+Combining Machine Learning and Predictive Control has the potential to significantly boost the efficiency of the modeling process for control while keeping the most important benefits of the advanced control methods.
+However, it is not without its own challenges.
+Selecting an appropriate class of machine learning models and structuring it to best capture the dynamics of a complex building system are not straightforward.
+Designing optimal experiments, under operation and safety constraints, to obtain the highest quality of data for training models is crucial but difficult.
+Formulating and solving data-driven predictive control problems efficiently so that performance, safety, and robustness are guaranteed are certainly complicated.
+Last but not least, intuitive, powerful, and seamless integrated software tools supporting the complete process from data-driven modeling to control synthesis and deployment are essential.
+These are some of the major challenges of data-driven predictive building control.
+
+We have developed a framework and its software implementation for bridging the gap between Machine Learning and Predictive Control for advanced building control systems.
+The framework is summarized in Section~\ref{sec:framework}, illustrated in Figures~\ref{fig:overall} and \ref{fig:overview}, and detailed in the subsequent sections.
+The software implementation is briefly described in Section~\ref{sec:case-study}.
+
+% \textbf{Contributions:}
+The \textbf{main contributions} of our work are three-fold.
+\begin{enumerate}
+\item We have developed an \emph{optimal experiment design} method for learning Gaussian Process models of buildings, that exploits the predictive variance returned by the Gaussian Processes.  Under limited system availability and operation constraints, our method can produce high quality training data that leads to faster learning rate than uniform random sampling or pseudo binary random sampling, reducing the duration of functional tests by up to \(50\%\).
+\item We have developed \emph{stochastic predictive control formulations} based on Gaussian Processes that that can provide probabilistic guarantees on closed-loop control performance and constraint satisfaction.
+\item Finally, we have implemented our framework in software tools and deployed them successfully on top of a commercial Supervisory Control and Data Acquisition (SCADA) system.
+\end{enumerate}
+
+
+\noindent\textbf{Related Work.}
+A broad range of data-driven methods for building modeling and advanced building control have been investigated in the literature.
+Regression trees were used in our previous work \cite{JainCDC2017} to model and compute set-point schedules of buildings for Demand Response.
+Neural networks were used for MPC of a residential HVAC system in \cite{Afram2017} and Deep Reinforcement Learning for scheduling electrical devices in \cite{Mocanu2017}.
+However, these methods require huge amount of data. 
+On the other hand, Gaussian Processes require only a few weeks of data, and our framework and tools provide an end-to-end solution for learning and control.
+GP models were investigated for forecasting long-term building energy consumption in \cite{nohetal13data}.
+% Simulation studies with EnergyPlus and regression models were used in \cite{yinetal16quantifying} to quantify the flexibility of buildings for DR using set-point change rules.
+The authors in \cite{zhangetal15comparisons} compared four data-driven methods for building energy predictions and concluded that the Gaussian approaches were accurate and highly flexible, and the uncertainty measures could be helpful for certain applications involving risks.
+In the experiment design literature, Gaussian Processes were used for sensor placement to capture maximum information in \cite{Krause2008}, whereas our method, for the first time, sequentially recommends control strategies to generate more informative training data for the buildings.
 
 
 %%% Local Variables:
